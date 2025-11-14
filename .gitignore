@@ -1,0 +1,18 @@
+# Original source video
+*.webm.bak
+Grond will breach it. [1zyUWqj1K60].webm
+
+# Audio source files (keeping only the WebM videos)
+audio_full.opus
+*.mp3
+*.m4a
+
+# Old GIF files (replaced with WebM)
+*.gif
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.tmp
+temp_*
