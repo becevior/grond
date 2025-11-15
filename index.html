@@ -34,34 +34,72 @@
             z-index: 1;
         }
 
-        #speaker-icon {
+        #landing-screen {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            background: radial-gradient(circle, rgba(139, 90, 43, 0.9), rgba(77, 51, 25, 0.95));
-            border: 2px solid rgba(255, 215, 0, 0.6);
-            border-radius: 8px;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            z-index: 2000;
+            gap: 40px;
+        }
+
+        #landing-title {
+            font-family: 'Cinzel', 'Georgia', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #d4af37;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            }
+            to {
+                text-shadow: 0 0 30px rgba(212, 175, 55, 0.8);
+            }
+        }
+
+        #button-container {
+            display: flex;
+            gap: 30px;
+            flex-direction: column;
+        }
+
+        .grond-button {
+            font-family: 'Cinzel', 'Georgia', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding: 20px 60px;
+            background: linear-gradient(135deg, #d4af37, #b8941f);
+            color: #1a1a1a;
+            border: 3px solid #d4af37;
+            border-radius: 8px;
             cursor: pointer;
-            z-index: 1000;
-            font-size: 28px;
-            transition: transform 0.1s, border-color 0.2s, box-shadow 0.2s;
-            user-select: none;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 215, 0, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+            transition: all 0.3s ease;
         }
 
-        #speaker-icon:hover {
-            border-color: rgba(255, 215, 0, 0.9);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7), inset 0 1px 3px rgba(255, 215, 0, 0.5);
+        .grond-button:hover {
             transform: scale(1.05);
+            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.6);
+            background: linear-gradient(135deg, #e5c04a, #d4af37);
         }
 
-        #speaker-icon:active {
-            transform: scale(0.95);
+        .grond-button:active {
+            transform: scale(0.98);
         }
 
         .hidden {
@@ -70,27 +108,40 @@
     </style>
 </head>
 <body>
-    <video id="background-video" loop muted autoplay playsinline>
+    <div id="landing-screen">
+        <h1 id="landing-title">GROND?</h1>
+        <div id="button-container">
+            <button class="grond-button" data-video="grond_loop.webm">GROND SMASH</button>
+            <button class="grond-button" data-video="grond_loop2.webm">GROND GROND GROND</button>
+            <button class="grond-button" data-video="grond_loop3.webm">WHO WILL BREACH IT?</button>
+        </div>
+    </div>
+
+    <video id="background-video" loop muted playsinline>
         <source src="grond_loop.webm" type="video/webm">
     </video>
 
-    <div id="speaker-icon" title="Click to toggle sound">🔇</div>
-
     <script>
-        // Randomly select one of the video loops
-        const videos = ['grond_loop.webm', 'grond_loop2.webm', 'grond_loop3.webm'];
-        const selectedVideo = videos[Math.floor(Math.random() * videos.length)];
-
         const video = document.getElementById('background-video');
-        const speakerIcon = document.getElementById('speaker-icon');
+        const landingScreen = document.getElementById('landing-screen');
+        const grondButtons = document.querySelectorAll('.grond-button');
 
-        video.querySelector('source').src = selectedVideo;
-        video.load();
+        // Add click handlers to all GROND buttons
+        grondButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const selectedVideo = this.getAttribute('data-video');
 
-        // Speaker icon click to toggle sound
-        speakerIcon.addEventListener('click', function() {
-            video.muted = !video.muted;
-            speakerIcon.textContent = video.muted ? '🔇' : '🔊';
+                // Set the selected video
+                video.querySelector('source').src = selectedVideo;
+                video.load();
+
+                // Hide landing screen
+                landingScreen.classList.add('hidden');
+
+                // Unmute and play the video
+                video.muted = false;
+                video.play();
+            });
         });
     </script>
 </body>
