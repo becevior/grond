@@ -10,6 +10,9 @@ audio_full.opus
 # Old GIF files (replaced with WebM)
 *.gif
 
+# Local environment configuration
+.env
+
 # macOS
 .DS_Store
 
