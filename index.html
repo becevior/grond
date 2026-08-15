@@ -8,6 +8,8 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="preload" as="image" href="grond-background.webp" type="image/webp">
     <script defer src="https://cdn.vercel-analytics.com/v1/script.js"></script>
+    <script src="posthog-config.js"></script>
+    <script defer src="posthog-init.js"></script>
     <style>
         * {
             margin: 0;
@@ -581,6 +583,10 @@
 
         function selectLoop(loop) {
             if (!videos.has(loop)) return;
+            window.posthog?.capture('video_selected', {
+                loop,
+                video_file: videos.get(loop).getAttribute('src')
+            });
             soundOptIns.add(loop);
             history.pushState({ view: 'loop', loop }, '', `#${loop}`);
             showLoop(loop, true);
