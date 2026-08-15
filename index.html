@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
     <title>GROND</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="preload" as="image" href="grond-background.webp" type="image/webp">
     <script defer src="https://cdn.vercel-analytics.com/v1/script.js"></script>
     <style>
         * {
@@ -13,136 +15,625 @@
             box-sizing: border-box;
         }
 
-        body {
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            background-color: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        :root {
+            color-scheme: dark;
+            font-family: "Cinzel", Georgia, serif;
         }
 
-        #background-video {
+        body {
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100svh;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .background-video {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
             object-position: center;
-            z-index: 1;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 250ms ease;
+        }
+
+        .background-video.is-active {
+            opacity: 1;
+            visibility: visible;
         }
 
         #landing-screen {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
+            inset: 0;
+            z-index: 2;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            padding: max(32px, env(safe-area-inset-top)) 24px max(32px, env(safe-area-inset-bottom));
+            isolation: isolate;
+            background:
+                linear-gradient(90deg, rgba(1, 2, 1, 0.34) 0%, rgba(1, 2, 1, 0.16) 42%, transparent 72%),
+                #030403;
+            transition: opacity 250ms ease, visibility 250ms ease;
+        }
+
+        .landing-backdrop {
+            position: absolute;
+            inset: 0;
+            z-index: -2;
+            background-position: center;
+            background-size: cover;
+            opacity: 0;
+            transform: scale(1.01);
+            transition: opacity 1600ms ease;
+            will-change: opacity;
+        }
+
+        #landing-backdrop-a {
+            background-image: url("grond-background.webp");
+        }
+
+        .landing-backdrop.is-active {
+            opacity: 1;
+        }
+
+        #landing-screen::before,
+        #landing-screen::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        #landing-screen::before {
+            opacity: 0.34;
+            background:
+                repeating-linear-gradient(115deg, transparent 0 42px, rgba(238, 194, 104, 0.035) 43px, transparent 44px 89px),
+                repeating-linear-gradient(25deg, transparent 0 61px, rgba(255, 255, 255, 0.018) 62px, transparent 63px 121px);
+            mix-blend-mode: screen;
+        }
+
+        #landing-screen::after {
+            background:
+                linear-gradient(90deg, rgba(1, 2, 1, 0.34) 0%, rgba(1, 2, 1, 0.16) 42%, transparent 72%),
+                linear-gradient(180deg, rgba(0, 0, 0, 0.12), transparent 52%, rgba(0, 0, 0, 0.5)),
+                radial-gradient(ellipse at center, transparent 32%, rgba(0, 0, 0, 0.3) 76%, rgba(0, 0, 0, 0.74) 100%);
+        }
+
+        #landing-screen.is-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        #landing-content {
+            position: relative;
+            width: min(100%, 520px);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            gap: 40px;
+            gap: 0;
+            padding: clamp(30px, 6vw, 52px);
+            border: 1px solid rgba(196, 154, 75, 0.5);
+            background:
+                linear-gradient(135deg, rgba(255, 224, 150, 0.045), transparent 28%),
+                rgba(5, 6, 4, 0.72);
+            box-shadow:
+                0 0 0 1px rgba(0, 0, 0, 0.9),
+                0 0 0 4px rgba(170, 127, 50, 0.08),
+                0 28px 90px rgba(0, 0, 0, 0.72),
+                inset 0 0 70px rgba(0, 0, 0, 0.48);
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+        }
+
+        #landing-content::before,
+        #landing-content::after {
+            content: "◆";
+            position: absolute;
+            left: 50%;
+            color: #b98d3b;
+            font-size: 0.64rem;
+            text-shadow: -28px 0 #665027, 28px 0 #665027;
+            transform: translateX(-50%) rotate(45deg);
+        }
+
+        #landing-content::before { top: -6px; }
+        #landing-content::after { bottom: -6px; }
+
+        #landing-kicker {
+            margin-bottom: 18px;
+            color: #9e8a61;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(0.68rem, 2.3vw, 0.8rem);
+            font-weight: 600;
+            letter-spacing: 0.34em;
+            text-align: center;
+            text-transform: uppercase;
         }
 
         #landing-title {
-            font-family: 'Cinzel', 'Georgia', serif;
-            font-size: 3rem;
+            color: #d9bd78;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(3.3rem, 12vw, 6.4rem);
             font-weight: 700;
-            color: #d4af37;
+            line-height: 0.82;
             text-align: center;
-            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
-            letter-spacing: 0.1em;
+            text-shadow:
+                0 1px 0 #fff0b3,
+                0 3px 0 #54401f,
+                0 0 30px rgba(212, 175, 55, 0.38);
+            letter-spacing: 0.08em;
             text-transform: uppercase;
             animation: glow 2s ease-in-out infinite alternate;
         }
 
         @keyframes glow {
-            from {
-                text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-            }
-            to {
-                text-shadow: 0 0 30px rgba(212, 175, 55, 0.8);
-            }
+            from { filter: drop-shadow(0 0 3px rgba(212, 175, 55, 0.18)); }
+            to { filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4)); }
+        }
+
+        #landing-subtitle {
+            margin-top: 20px;
+            color: #b7aa8c;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(0.92rem, 3vw, 1.05rem);
+            font-style: italic;
+            letter-spacing: 0.07em;
+            text-align: center;
+        }
+
+        .ornament {
+            width: min(70%, 260px);
+            height: 1px;
+            margin: 30px 0;
+            background: linear-gradient(90deg, transparent, #927039 44%, transparent 44% 56%, #927039 56%, transparent);
+        }
+
+        .ornament::after {
+            content: "◇";
+            display: block;
+            width: 24px;
+            margin: -11px auto 0;
+            color: #c2994f;
+            background: #080806;
+            font-size: 1rem;
+            text-align: center;
         }
 
         #button-container {
-            display: flex;
-            gap: 30px;
-            flex-direction: column;
+            width: 100%;
+            display: grid;
+            gap: 20px;
+            padding: 0 clamp(12px, 4vw, 24px);
+        }
+
+        .grond-button,
+        .video-control {
+            font: inherit;
+            cursor: pointer;
         }
 
         .grond-button {
-            font-family: 'Cinzel', 'Georgia', serif;
-            font-size: 1.5rem;
-            font-weight: 600;
-            padding: 20px 60px;
-            background: linear-gradient(135deg, #d4af37, #b8941f);
-            color: #1a1a1a;
-            border: 3px solid #d4af37;
-            border-radius: 8px;
-            cursor: pointer;
+            position: relative;
+            isolation: isolate;
+            width: 100%;
+            min-height: 66px;
+            padding: 17px 56px;
+            overflow: visible;
+            border: 6px solid transparent;
+            border-radius: 7px;
+            background:
+                linear-gradient(180deg, #741108 0%, #3e0302 48%, #4e0503 100%) padding-box,
+                linear-gradient(145deg, #f0ca61 0%, #b77b18 28%, #604008 62%, #ce9a2d 100%) border-box;
+            color: #e5d29e;
+            box-shadow:
+                0 0 0 2px #020302,
+                0 6px 0 #030403,
+                0 10px 24px rgba(0, 0, 0, 0.64),
+                inset 0 0 0 2px #210101,
+                inset 0 3px 0 rgba(225, 74, 49, 0.78),
+                inset 0 -4px 0 rgba(27, 0, 0, 0.76),
+                inset 0 0 22px rgba(0, 0, 0, 0.52);
+            font-size: clamp(1rem, 4vw, 1.25rem);
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-shadow: 0 2px 2px #000, 0 0 8px rgba(255, 211, 129, 0.16);
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
-            transition: all 0.3s ease;
+            transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
         }
 
+        .grond-button::before,
+        .grond-button::after {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            top: 50%;
+            width: 22px;
+            height: 22px;
+            border: 2px solid #050706;
+            border-radius: 2px;
+            background: linear-gradient(135deg, #4f554f, #111411 46%, #030403 72%, #333a34);
+            box-shadow:
+                0 0 0 2px #010201,
+                inset 2px 2px rgba(255, 255, 255, 0.12),
+                4px 4px 8px rgba(0, 0, 0, 0.6);
+            transform: translateY(-50%) rotate(45deg);
+        }
+
+        .grond-button::before { left: -17px; }
+        .grond-button::after { right: -17px; }
+
         .grond-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.6);
-            background: linear-gradient(135deg, #e5c04a, #d4af37);
+            transform: translateY(-2px);
+            color: #fff0bd;
+            filter: brightness(1.18);
+            box-shadow:
+                0 0 0 2px #070907,
+                0 7px 0 #030403,
+                0 13px 30px rgba(132, 23, 10, 0.34),
+                inset 0 0 0 2px #260101,
+                inset 0 3px 0 rgba(244, 92, 64, 0.86),
+                inset 0 -4px 0 rgba(27, 0, 0, 0.76),
+                inset 0 0 22px rgba(0, 0, 0, 0.46);
         }
 
         .grond-button:active {
-            transform: scale(0.98);
+            transform: translateY(3px) scale(0.995);
+            box-shadow:
+                0 0 0 2px #020302,
+                0 2px 0 #030403,
+                inset 0 0 0 2px #210101,
+                inset 0 2px 8px rgba(0, 0, 0, 0.85);
         }
 
-        .hidden {
-            display: none !important;
+        .grond-button:focus-visible,
+        .video-control:focus-visible {
+            outline: 3px solid #fff0aa;
+            outline-offset: 4px;
+        }
+
+        .grond-button:disabled {
+            cursor: wait;
+            filter: saturate(0.62) brightness(0.74);
+            transform: none;
+        }
+
+        .button-label {
+            position: relative;
+        }
+
+        .grond-button.is-loading .button-label::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: calc(100% + 18px);
+            width: 18px;
+            height: 18px;
+            margin-top: -9px;
+            border: 2px solid rgba(217, 194, 140, 0.24);
+            border-top-color: #d9c28c;
+            border-radius: 50%;
+            animation: spin 700ms linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #load-status {
+            min-height: 1.25em;
+            margin-top: 18px;
+            color: #a99a75;
+            font-family: system-ui, sans-serif;
+            font-size: 0.88rem;
+            letter-spacing: 0.04em;
+            text-align: center;
+        }
+
+        .video-control {
+            position: fixed;
+            z-index: 3;
+            top: max(18px, env(safe-area-inset-top));
+            min-height: 44px;
+            padding: 10px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.62);
+            color: #fff;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            font-family: system-ui, sans-serif;
+            font-size: 0.92rem;
+            font-weight: 650;
+            transition: background 160ms ease, opacity 160ms ease;
+        }
+
+        .video-control:hover {
+            background: rgba(0, 0, 0, 0.82);
+        }
+
+        .video-control[hidden] {
+            display: none;
+        }
+
+        #back-button {
+            left: max(18px, env(safe-area-inset-left));
+        }
+
+        #sound-button {
+            right: max(18px, env(safe-area-inset-right));
+        }
+
+        @media (max-height: 560px) {
+            #landing-content { padding: 24px; }
+            #landing-kicker { margin-bottom: 10px; }
+            #landing-subtitle { margin-top: 12px; }
+            .ornament { margin: 18px 0; }
+            #button-container { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+            .grond-button { min-height: 58px; padding: 12px; font-size: 0.82rem; }
+            .grond-button::before,
+            .grond-button::after { display: none; }
+            #load-status { margin-top: 12px; }
+        }
+
+        @media (min-width: 900px) and (min-height: 620px) {
+            #landing-screen {
+                place-items: center start;
+                padding-left: clamp(42px, 6vw, 110px);
+            }
+
+            #landing-content {
+                width: min(42vw, 480px);
+            }
+
+            .landing-backdrop {
+                inset: -10%;
+                background-position: left center;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .landing-backdrop {
+                background-position: 62% center;
+            }
+
+            #landing-content {
+                background: rgba(5, 6, 4, 0.82);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 1ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 1ms !important;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="landing-screen">
-        <h1 id="landing-title">GROND?</h1>
-        <div id="button-container">
-            <button class="grond-button" data-video="grond_loop.webm">GROND SMASH</button>
-            <button class="grond-button" data-video="grond_loop2.webm">GROND GROND GROND</button>
-            <button class="grond-button" data-video="grond_loop3.webm">WHO WILL BREACH IT?</button>
+    <main id="landing-screen">
+        <div id="landing-backdrop-a" class="landing-backdrop is-active" aria-hidden="true"></div>
+        <div id="landing-backdrop-b" class="landing-backdrop" aria-hidden="true"></div>
+        <div id="landing-content">
+            <p id="landing-kicker">At the fall of night</p>
+            <h1 id="landing-title">GROND</h1>
+            <p id="landing-subtitle">Choose the blow that breaks the gate.</p>
+            <div class="ornament" aria-hidden="true"></div>
+            <div id="button-container">
+                <button type="button" class="grond-button" data-loop="grond-smash"><span class="button-label">GROND SMASH</span></button>
+                <button type="button" class="grond-button" data-loop="grond-chant"><span class="button-label">GROND GROND GROND</span></button>
+                <button type="button" class="grond-button" data-loop="breach"><span class="button-label">WHO WILL BREACH IT?</span></button>
+            </div>
+            <p id="load-status" role="status" aria-live="polite"></p>
         </div>
-    </div>
+    </main>
 
-    <video id="background-video" loop muted playsinline>
-        <source src="grond_loop.webm" type="video/webm">
-    </video>
+    <video class="background-video" data-loop="grond-smash" src="grond_loop.webm" preload="auto" loop muted playsinline></video>
+    <video class="background-video" data-loop="grond-chant" src="grond_loop2.webm" preload="auto" loop muted playsinline></video>
+    <video class="background-video" data-loop="breach" src="grond_loop3.webm" preload="auto" loop muted playsinline></video>
+
+    <button type="button" id="back-button" class="video-control" aria-label="Back to loop selection" hidden>&larr; Back</button>
+    <button type="button" id="sound-button" class="video-control" aria-label="Mute video" hidden>Sound on</button>
 
     <script>
-        const video = document.getElementById('background-video');
         const landingScreen = document.getElementById('landing-screen');
-        const grondButtons = document.querySelectorAll('.grond-button');
+        const loadStatus = document.getElementById('load-status');
+        const grondButtons = [...document.querySelectorAll('.grond-button')];
+        const videos = new Map(
+            [...document.querySelectorAll('.background-video')].map(video => [video.dataset.loop, video])
+        );
+        const backButton = document.getElementById('back-button');
+        const soundButton = document.getElementById('sound-button');
+        const backgroundFiles = [
+            'grond-background.webp',
+            'grond-background-panorama.webp',
+            'grond-background-charcoal.webp',
+            'grond-background-war-machine.webp',
+            'grond-background-8bit.webp',
+            'grond-background-animated.webp'
+        ];
+        const backdropLayers = [...document.querySelectorAll('.landing-backdrop')];
+        const soundOptIns = new Set();
+        let activeVideo = null;
+        let navigationId = 0;
+        let activeBackdrop = 0;
+        let backgroundIndex = 0;
+        let backgroundTimer = null;
 
-        // Add click handlers to all GROND buttons
-        grondButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const selectedVideo = this.getAttribute('data-video');
+        const baseUrl = `${window.location.pathname}${window.location.search}`;
 
-                // Set the selected video
-                video.querySelector('source').src = selectedVideo;
-                video.load();
+        function loopFromUrl() {
+            const loop = window.location.hash.slice(1);
+            return videos.has(loop) ? loop : null;
+        }
 
-                // Hide landing screen
-                landingScreen.classList.add('hidden');
-
-                // Unmute and play the video
-                video.muted = false;
-                video.play();
+        function loadBackground(src) {
+            return new Promise(resolve => {
+                const image = new Image();
+                image.onload = resolve;
+                image.onerror = resolve;
+                image.src = src;
             });
+        }
+
+        async function rotateBackground() {
+            const nextIndex = (backgroundIndex + 1) % backgroundFiles.length;
+            const nextBackdrop = activeBackdrop === 0 ? 1 : 0;
+            const src = backgroundFiles[nextIndex];
+
+            await loadBackground(src);
+            backdropLayers[nextBackdrop].style.backgroundImage = `url("${src}")`;
+            backdropLayers[nextBackdrop].classList.add('is-active');
+            backdropLayers[activeBackdrop].classList.remove('is-active');
+            activeBackdrop = nextBackdrop;
+            backgroundIndex = nextIndex;
+        }
+
+        function startBackgroundRotation() {
+            if (backgroundTimer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            backgroundTimer = window.setInterval(rotateBackground, 9000);
+        }
+
+        function stopBackgroundRotation() {
+            window.clearInterval(backgroundTimer);
+            backgroundTimer = null;
+        }
+
+        function setLoading(loop, isLoading, message = '') {
+            grondButtons.forEach(button => {
+                button.disabled = isLoading;
+                button.classList.toggle('is-loading', isLoading && button.dataset.loop === loop);
+            });
+            loadStatus.textContent = message;
+        }
+
+        function updateSoundButton() {
+            if (!activeVideo) return;
+            soundButton.textContent = activeVideo.muted ? 'Sound off' : 'Sound on';
+            soundButton.setAttribute('aria-label', activeVideo.muted ? 'Unmute video' : 'Mute video');
+        }
+
+        function showLanding() {
+            navigationId += 1;
+            videos.forEach(video => {
+                video.pause();
+                video.muted = true;
+                video.classList.remove('is-active');
+                if (video.readyState > 0) video.currentTime = 0;
+            });
+            activeVideo = null;
+            landingScreen.classList.remove('is-hidden');
+            backButton.hidden = true;
+            soundButton.hidden = true;
+            setLoading(null, false);
+            if (!document.hidden) startBackgroundRotation();
+        }
+
+        async function showLoop(loop, withSound) {
+            const video = videos.get(loop);
+            if (!video) {
+                showLanding();
+                return;
+            }
+
+            const requestId = ++navigationId;
+            setLoading(loop, true, 'Summoning GROND…');
+
+            videos.forEach(otherVideo => {
+                if (otherVideo !== video) {
+                    otherVideo.pause();
+                    otherVideo.muted = true;
+                    otherVideo.classList.remove('is-active');
+                }
+            });
+
+            video.muted = !withSound;
+
+            try {
+                await video.play();
+            } catch (error) {
+                if (requestId === navigationId) {
+                    setLoading(loop, false, 'Tap the button again to start with sound.');
+                }
+                return;
+            }
+
+            if (requestId !== navigationId) {
+                video.pause();
+                return;
+            }
+
+            activeVideo = video;
+            stopBackgroundRotation();
+            video.classList.add('is-active');
+            landingScreen.classList.add('is-hidden');
+            backButton.hidden = false;
+            soundButton.hidden = false;
+            setLoading(loop, false);
+            updateSoundButton();
+        }
+
+        function selectLoop(loop) {
+            if (!videos.has(loop)) return;
+            soundOptIns.add(loop);
+            history.pushState({ view: 'loop', loop }, '', `#${loop}`);
+            showLoop(loop, true);
+        }
+
+        grondButtons.forEach(button => {
+            button.addEventListener('click', () => selectLoop(button.dataset.loop));
         });
+
+        backButton.addEventListener('click', () => {
+            if (history.state?.view === 'loop') {
+                history.back();
+            } else {
+                history.replaceState({ view: 'landing' }, '', baseUrl);
+                showLanding();
+            }
+        });
+
+        soundButton.addEventListener('click', () => {
+            if (!activeVideo) return;
+            activeVideo.muted = !activeVideo.muted;
+            updateSoundButton();
+        });
+
+        window.addEventListener('popstate', () => {
+            const loop = loopFromUrl();
+            if (loop && soundOptIns.has(loop)) {
+                showLoop(loop, true);
+            } else {
+                if (loop) history.replaceState({ view: 'landing' }, '', baseUrl);
+                showLanding();
+            }
+        });
+
+        window.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && activeVideo) backButton.click();
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopBackgroundRotation();
+            } else {
+                startBackgroundRotation();
+            }
+        });
+
+        window.addEventListener('load', () => {
+            backgroundFiles.slice(1).forEach(src => loadBackground(src));
+            startBackgroundRotation();
+        });
+
+        // A fresh page load always requires a new click before audio can play.
+        history.replaceState({ view: 'landing' }, '', baseUrl);
     </script>
 </body>
 </html>
