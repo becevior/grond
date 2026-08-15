@@ -359,6 +359,47 @@
             background: rgba(0, 0, 0, 0.82);
         }
 
+        .background-nav {
+            position: absolute;
+            z-index: 3;
+            top: 50%;
+            width: 44px;
+            height: 58px;
+            padding: 0;
+            border: 1px solid rgba(226, 185, 84, 0.3);
+            border-radius: 6px;
+            background: rgba(5, 5, 4, 0.28);
+            color: rgba(241, 213, 141, 0.68);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+            font-family: Georgia, serif;
+            font-size: 1.8rem;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0.56;
+            transform: translateY(-50%);
+            transition: background 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease, transform 160ms ease;
+        }
+
+        .background-nav:hover {
+            border-color: rgba(226, 185, 84, 0.72);
+            background: rgba(10, 8, 5, 0.72);
+            color: #f1d58d;
+            opacity: 1;
+            transform: translateY(-50%) scale(1.06);
+        }
+
+        .background-nav:active {
+            transform: translateY(-50%) scale(0.96);
+        }
+
+        .background-nav:focus-visible {
+            outline: 3px solid #fff0aa;
+            outline-offset: 4px;
+            opacity: 1;
+        }
+
         .video-control[hidden] {
             display: none;
         }
@@ -368,6 +409,14 @@
         }
 
         #sound-button {
+            right: max(18px, env(safe-area-inset-right));
+        }
+
+        #previous-background {
+            left: max(18px, env(safe-area-inset-left));
+        }
+
+        #next-background {
             right: max(18px, env(safe-area-inset-right));
         }
 
@@ -407,6 +456,20 @@
             #landing-content {
                 background: rgba(5, 6, 4, 0.82);
             }
+
+            .background-nav {
+                top: auto;
+                bottom: max(18px, env(safe-area-inset-bottom));
+                width: 44px;
+                height: 42px;
+                transform: none;
+            }
+
+            .background-nav:hover { transform: scale(1.06); }
+            .background-nav:active { transform: scale(0.96); }
+
+            #previous-background { left: calc(50% - 68px); }
+            #next-background { right: calc(50% - 68px); }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -434,6 +497,8 @@
             </div>
             <p id="load-status" role="status" aria-live="polite"></p>
         </div>
+        <button type="button" id="previous-background" class="background-nav" aria-label="Previous background" title="Previous background (Left Arrow)">&#10094;</button>
+        <button type="button" id="next-background" class="background-nav" aria-label="Next background" title="Next background (Right Arrow)">&#10095;</button>
     </main>
 
     <video class="background-video" data-loop="grond-smash" src="grond_loop.webm" preload="auto" loop muted playsinline></video>
@@ -452,6 +517,8 @@
         );
         const backButton = document.getElementById('back-button');
         const soundButton = document.getElementById('sound-button');
+        const previousBackgroundButton = document.getElementById('previous-background');
+        const nextBackgroundButton = document.getElementById('next-background');
         const backgroundFiles = [
             'grond-background.webp',
             'grond-background-panorama.webp',
@@ -468,10 +535,10 @@
         let backgroundIndex = 0;
         let backgroundTimer = null;
 
-        const baseUrl = `${window.location.pathname}${window.location.search}`;
+        const baseUrl = window.location.pathname;
 
-        function loopFromUrl() {
-            const loop = window.location.hash.slice(1);
+        function loopFromHistory() {
+            const loop = history.state?.view === 'loop' ? history.state.loop : null;
             return videos.has(loop) ? loop : null;
         }
 
@@ -484,8 +551,8 @@
             });
         }
 
-        async function rotateBackground() {
-            const nextIndex = (backgroundIndex + 1) % backgroundFiles.length;
+        async function rotateBackground(direction = 1) {
+            const nextIndex = (backgroundIndex + direction + backgroundFiles.length) % backgroundFiles.length;
             const nextBackdrop = activeBackdrop === 0 ? 1 : 0;
             const src = backgroundFiles[nextIndex];
 
@@ -505,6 +572,12 @@
         function stopBackgroundRotation() {
             window.clearInterval(backgroundTimer);
             backgroundTimer = null;
+        }
+
+        function selectBackground(direction) {
+            stopBackgroundRotation();
+            rotateBackground(direction);
+            startBackgroundRotation();
         }
 
         function setLoading(loop, isLoading, message = '') {
@@ -545,6 +618,7 @@
             }
 
             const requestId = ++navigationId;
+            backButton.hidden = false;
             setLoading(loop, true, 'Summoning GROND…');
 
             videos.forEach(otherVideo => {
@@ -588,7 +662,7 @@
                 video_file: videos.get(loop).getAttribute('src')
             });
             soundOptIns.add(loop);
-            history.pushState({ view: 'loop', loop }, '', `#${loop}`);
+            history.pushState({ view: 'loop', loop }, '', baseUrl);
             showLoop(loop, true);
         }
 
@@ -611,19 +685,29 @@
             updateSoundButton();
         });
 
+        previousBackgroundButton.addEventListener('click', () => selectBackground(-1));
+        nextBackgroundButton.addEventListener('click', () => selectBackground(1));
+
         window.addEventListener('popstate', () => {
-            const loop = loopFromUrl();
+            const loop = loopFromHistory();
             if (loop && soundOptIns.has(loop)) {
                 showLoop(loop, true);
             } else {
-                if (loop) history.replaceState({ view: 'landing' }, '', baseUrl);
                 showLanding();
             }
         });
 
-        window.addEventListener('keydown', event => {
-            if (event.key === 'Escape' && activeVideo) backButton.click();
-        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && activeVideo) {
+                backButton.click();
+            } else if ((event.key === 'ArrowLeft' || event.code === 'ArrowLeft') && !activeVideo) {
+                event.preventDefault();
+                selectBackground(-1);
+            } else if ((event.key === 'ArrowRight' || event.code === 'ArrowRight') && !activeVideo) {
+                event.preventDefault();
+                selectBackground(1);
+            }
+        }, { capture: true });
 
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
@@ -633,13 +717,12 @@
             }
         });
 
-        window.addEventListener('load', () => {
-            backgroundFiles.slice(1).forEach(src => loadBackground(src));
-            startBackgroundRotation();
-        });
-
         // A fresh page load always requires a new click before audio can play.
         history.replaceState({ view: 'landing' }, '', baseUrl);
+
+        // Start independently of third-party scripts so analytics cannot stall the carousel.
+        backgroundFiles.slice(1).forEach(src => loadBackground(src));
+        if (!document.hidden) startBackgroundRotation();
     </script>
 </body>
 </html>
