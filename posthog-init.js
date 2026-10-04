@@ -16,11 +16,8 @@
 
     window.posthog.init(projectToken, {
         api_host: host,
+        ui_host: 'https://us.posthog.com',
         defaults: '2026-05-30',
-        capture_exceptions: {
-            capture_unhandled_errors: true,
-            capture_unhandled_rejections: true,
-            capture_console_errors: false
-        }
+        capture_exceptions: true
     });
 }());
