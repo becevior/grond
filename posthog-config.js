@@ -1,4 +1,4 @@
 window.POSTHOG_CONFIG = {
-    "projectToken": "phc_ourVUmWbs2PcEveEgynaNcbsSTB5zmtBMEgitteY3eXh",
+    "projectToken": "phc_nVXNJfE3CKs2e7vUy9ThGZ94f9kTk9GQu5DqBNKoHwoF",
     "host": "https://us.i.posthog.com"
 };
